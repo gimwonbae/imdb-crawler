@@ -29,39 +29,31 @@ class Parser:
     for ct in ctList :
       try:
         header = ct.find('h3', {'class': 'lister-item-header'})
-      except AttributeError as e:
-        header = ''
-        print(self.url, ' : HEADER ', e)  
-      try:
         number = header.a.get('href').split('/')[2]
-      except AttributeError as e:
-        number = ''
-        print(self.url, ' : NUMBER ', e)
-      try:
         title = header.a.get_text()
-      except AttributeError as e:
-        print(self.url, ' : TITLE ', e)
-      try:
         year = header.find('span', {'class' : 'lister-item-year'}).get_text().replace('(','').replace(')','').strip()
-      except AttributeError as e:
-        year = ''
-        print(self.url, ' : YEAR ', e)
-      try:  
         genre = ct.find('span', {'class' : 'genre'}).get_text().replace('\n','').strip()
-      except AttributeError as e:
-        genre = ''
-        print(self.url, ' : GENRE ', e)
-      try:
         star = ct.find('p', {'class' : ''}).get_text().split('\n')[-2]
       except AttributeError as e:
-        star = ''
-        print(self.url, ' : STAR ', e)
+        print(self.url, ' : ', e)
+        
+        number = "!!! EROOR !!!"
+        title = ""
+        year = ""
+        genre = ""
+        star = ""
       content[number] = [title, year, genre, star]
   def setNext(self) :
     return self.bs.find('a', {'class' : 'next-page'}).get('href')
-    
 
-  
+nextPage = 'https://www.imdb.com/search/title/?country_of_origin=kr&start=1351'
+content = dict()
+
+crlr = Crawler(nextPage)
+bs = crlr.getPage()
+parser = Parser(bs, nextPage)
+parser.setContent(content)
+print(content)  
 # class Content:
 #   def __init__(self, number, title, year, genre, star)
 #     self.number = number
@@ -69,7 +61,7 @@ class Parser:
 #     self.year = yaer
 #     self.genre = genre
 #     self.star = star
-
+''' loop station
 home = 'https://www.imdb.com'
 nextPage = 'https://www.imdb.com/search/title/?country_of_origin=kr'
 maxNum = 255
@@ -83,7 +75,10 @@ while(i < maxNum) :
   parser.setContent(content)
   nextPage = home + parser.setNext()
   i+=1
-  if (i==255) :
+  if (i%50 == 0) :
+    print(i)
+  if (i==244) :
     print(nextPage)
 
 # print(content)
+'''
