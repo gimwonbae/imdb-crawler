@@ -3,7 +3,7 @@ from urllib.error import HTTPError
 from bs4 import BeautifulSoup
 import csv
 import re
-import pandas as pd
+from pandas import DataFrame
 
 def nextSib(head, number):
     i = 0
@@ -56,7 +56,7 @@ class Parser:
         genre = ''
         # print(self.url, ' : GENRE ', e)
       try:
-        star = ct.find('p', {'class' : ''}).get_text().split('\n')[-2]
+        star = nextSib(ct.find('p'), 6).get_text().split(',')[-1].replace('\n','')
       except AttributeError as e:
         star = ''
         # print(self.url, ' : STAR ', e)
@@ -69,16 +69,19 @@ class Parser:
   def setNext(self) :
     return self.bs.find('a', {'class' : 'next-page'}).get('href')
     
-def makeCsv(content) :
-  csvFile = open('test.csv', 'w+', encoding='utf-8')
-  try:
-    writer = csv.writer(csvFile)
-    writer.writerow(('id','title','year','genre','star'))
-    for key, value in content.items():
-      writer.writerow((key, value[0], value[1], value[2], value[3]))
-  finally:
-    csvFile.close()
+# def makeCsv(content) :
+#   csvFile = open('test.csv', 'w+', encoding='utf-8')
+#   try:
+#     writer = csv.writer(csvFile)
+#     writer.writerow(('id','title','year','genre','star'))
+#     for key, value in content.items():
+#       writer.writerow((key, value[0], value[1], value[2], value[3]))
+#   finally:
+#     csvFile.close()
 
+def toExcel(content) :
+  df = DataFrame(data=content, columns=['number','title','year','genre','star'])
+  df.to_excel("test.xlsx")
 # class Content:
 #   def __init__(self, number, title, year, genre, star)
 #     self.number = number
@@ -104,4 +107,5 @@ while(i < maxNum) :
   #   print(nextPage)
 
 print(content)
+toExcel(content)
 # makeCsv(content)
