@@ -3,6 +3,7 @@ from urllib.error import HTTPError
 from bs4 import BeautifulSoup
 import csv
 import re
+import pandas as pd
 
 def nextSib(head, number):
     i = 0
@@ -59,7 +60,12 @@ class Parser:
       except AttributeError as e:
         star = ''
         # print(self.url, ' : STAR ', e)
-      content[number] = [title, year, genre, star]
+      content['number'].append(number)
+      content['title'].append(title)
+      content['year'].append(year)
+      content['genre'].append(genre)
+      content['star'].append(star)
+
   def setNext(self) :
     return self.bs.find('a', {'class' : 'next-page'}).get('href')
     
@@ -83,8 +89,8 @@ def makeCsv(content) :
 
 home = 'https://www.imdb.com'
 nextPage = 'https://www.imdb.com/search/title/?country_of_origin=kr'
-maxNum = 255
-content = dict()
+maxNum = 10
+content = {'number':[] ,'title':[],'year':[],'genre':[],'star':[]}
 
 i = 0
 while(i < maxNum) :
@@ -96,5 +102,6 @@ while(i < maxNum) :
   i+=1
   # if (i==255) :
   #   print(nextPage)
-print(content['tt6256616'])
+
+print(content)
 # makeCsv(content)
