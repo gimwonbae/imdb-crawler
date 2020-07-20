@@ -67,7 +67,11 @@ class Parser:
       content['star'].append(star)
 
   def setNext(self) :
-    return self.bs.find('a', {'class' : 'next-page'}).get('href')
+    try:
+      url = self.bs.find('a', {'class' : 'next-page'}).get('href')
+    except AttributeError as e:
+      url = ''
+    return url
     
 # def makeCsv(content) :
 #   csvFile = open('test.csv', 'w+', encoding='utf-8')
@@ -92,7 +96,7 @@ def toExcel(content) :
 
 home = 'https://www.imdb.com'
 nextPage = 'https://www.imdb.com/search/title/?country_of_origin=kr'
-maxNum = 10
+maxNum = 1000
 content = {'number':[] ,'title':[],'year':[],'genre':[],'star':[]}
 
 i = 0
@@ -101,11 +105,14 @@ while(i < maxNum) :
   bs = crlr.getPage()
   parser = Parser(bs, nextPage)
   parser.setContent(content)
-  nextPage = home + parser.setNext()
+  if (not nextPage):
+    break
+  else:
+    nextPage = home + parser.setNext()
   i+=1
   # if (i==255) :
   #   print(nextPage)
 
-print(content)
+# print(content)
 toExcel(content)
 # makeCsv(content)
