@@ -46,7 +46,8 @@ class Parser:
         title = ''
         # print(self.url, ' : TITLE ', e)
       try:
-        year = header.find('span', {'class' : 'lister-item-year'}).get_text().replace('(','').replace(')','').strip()
+        yearNotClean = header.find('span', {'class' : 'lister-item-year'}).get_text().replace('(','').replace(')','').strip()
+        year = re.sub('[^0-9-]', '', yearNotClean)
       except AttributeError as e:
         year = ''
         # print(self.url, ' : YEAR ', e)
@@ -56,7 +57,14 @@ class Parser:
         genre = ''
         # print(self.url, ' : GENRE ', e)
       try:
-        star = nextSib(ct.find('p'), 6).get_text().split(',')[-1].replace('\n','')
+        items = nextSib(ct.find('p'), 6).get_text().split('\n')
+        i = 0
+        star = ''
+        for item in items:
+          if 'Star' in item:
+            star = items[i+1].replace(',','').strip()
+            break
+          i+=1
       except AttributeError as e:
         star = ''
         # print(self.url, ' : STAR ', e)
@@ -95,6 +103,7 @@ def toExcel(content) :
 #     self.star = star
 
 home = 'https://www.imdb.com'
+# nextPage = 'https://www.imdb.com/search/title/?country_of_origin=kr&start=5001'
 nextPage = 'https://www.imdb.com/search/title/?country_of_origin=kr'
 maxNum = 1000
 content = {'number':[] ,'title':[],'year':[],'genre':[],'star':[]}
