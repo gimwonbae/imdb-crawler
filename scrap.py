@@ -93,6 +93,7 @@ class Parser:
 
 def toExcel(content) :
   df = DataFrame(data=content, columns=['number','title','year','genre','star'])
+  df.drop_duplicates('number')
   df.to_excel("test.xlsx")
 # class Content:
 #   def __init__(self, number, title, year, genre, star)
