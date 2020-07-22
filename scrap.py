@@ -1,7 +1,7 @@
 from urllib.request import urlopen
 from urllib.error import HTTPError
 from bs4 import BeautifulSoup
-import csv
+# import csv
 import re
 from pandas import DataFrame
 
@@ -41,16 +41,10 @@ class Parser:
         number = ''
         # print(self.url, ' : NUMBER ', e)
       try:
-        title = header.a.get_text()
+        title = header.a.get_text().strip()
       except AttributeError as e:
         title = ''
         # print(self.url, ' : TITLE ', e)
-      try:
-        yearNotClean = header.find('span', {'class' : 'lister-item-year'}).get_text().replace('(','').replace(')','').strip()
-        year = re.sub('[^0-9-]', '', yearNotClean)
-      except AttributeError as e:
-        year = ''
-        # print(self.url, ' : YEAR ', e)
       try:  
         genre = ct.find('span', {'class' : 'genre'}).get_text().replace('\n','').strip()
       except AttributeError as e:
@@ -68,6 +62,15 @@ class Parser:
       except AttributeError as e:
         star = ''
         # print(self.url, ' : STAR ', e)
+      try:
+        yearNotClean = header.find('span', {'class' : 'lister-item-year'}).get_text().replace('(','').replace(')','').strip()
+        if 'Video Game' in yearNotClean:
+          year = 'Video Game'
+        else:
+          year = re.sub('[^0-9–]', '', yearNotClean)  
+      except AttributeError as e:
+        year = ''
+        # print(self.url, ' : YEAR ', e)        
       content['number'].append(number)
       content['title'].append(title)
       content['year'].append(year)
@@ -93,7 +96,8 @@ class Parser:
 
 def toExcel(content) :
   df = DataFrame(data=content, columns=['number','title','year','genre','star'])
-  df.drop_duplicates('number')
+  df = df.drop_duplicates('number')
+  df = df.drop(df[df['year'].str.contains('Video Game')].index)
   df.to_excel("test.xlsx")
 # class Content:
 #   def __init__(self, number, title, year, genre, star)
@@ -115,14 +119,15 @@ while(i < maxNum) :
   bs = crlr.getPage()
   parser = Parser(bs, nextPage)
   parser.setContent(content)
-  if (not nextPage):
+  # print(i)
+  nextUrl = parser.setNext()
+  if (not nextUrl):
     break
   else:
-    nextPage = home + parser.setNext()
+    nextPage = home + nextUrl
   i+=1
   # if (i==255) :
   #   print(nextPage)
 
-# print(content)
 toExcel(content)
 # makeCsv(content)
