@@ -22,6 +22,15 @@ class Crawler:
     except HTTPError as e:
       print(self.url, ' : ', e)
     return BeautifulSoup(html, 'html.parser')
+  def saveHtml(self, path):
+    try:
+      html = urlopen(self.url)
+      # print(path + self.url.replace('/','-') + '.html')
+      f= open(path + self.url.replace('https://','').replace('/','-').replace('?','Q') + '.html', 'wb')
+      f.write(html.read())
+    except HTTPError as e:
+      print(self.url, ' : ', e)
+    
 
 class Parser:
   def __init__(self, bs, url) :
@@ -45,6 +54,19 @@ class Parser:
       except AttributeError as e:
         title = ''
         # print(self.url, ' : TITLE ', e)
+      try:
+        yearNotClean = header.find('span', {'class' : 'lister-item-year'}).get_text().replace('(','').replace(')','').strip()
+        if 'Video Game' in yearNotClean:
+          year = 'Video Game'
+        else:
+          year = re.sub('[^0-9–]', '', yearNotClean)  
+      except AttributeError as e:
+        year = ''
+        # print(self.url, ' : YEAR ', e)            
+      # try:
+      #   tv = 
+      # except AttributeError as e:
+
       try:  
         genre = ct.find('span', {'class' : 'genre'}).get_text().replace('\n','').strip()
       except AttributeError as e:
@@ -62,20 +84,28 @@ class Parser:
       except AttributeError as e:
         star = ''
         # print(self.url, ' : STAR ', e)
+        
       try:
-        yearNotClean = header.find('span', {'class' : 'lister-item-year'}).get_text().replace('(','').replace(')','').strip()
-        if 'Video Game' in yearNotClean:
-          year = 'Video Game'
+        crlr = Crawler('https://www.imdb.com/title/' + number)
+        bs2 = crlr.getPage()
+        moreYear = bs2.find('a', {'title' : 'See more release dates'}).get_text()
+        if 'TV Series' in moreYear:
+          TVseries = True
         else:
-          year = re.sub('[^0-9–]', '', yearNotClean)  
+          TVseries = False
       except AttributeError as e:
-        year = ''
-        # print(self.url, ' : YEAR ', e)        
+        TVseries = ''
+        # print(self.url, ' : TVseries', e) 
+
+      file = self.url.replace('https://','').replace('/','-').replace('?','Q') + '.html'
+
       content['number'].append(number)
       content['title'].append(title)
       content['year'].append(year)
       content['genre'].append(genre)
       content['star'].append(star)
+      content['TVseries'].append(TVseries)
+      content['file'].append(file)
 
   def setNext(self) :
     try:
@@ -95,10 +125,11 @@ class Parser:
 #     csvFile.close()
 
 def toExcel(content) :
-  df = DataFrame(data=content, columns=['number','title','year','genre','star'])
+  df = DataFrame(data=content, columns=['number','title','year','genre','star','TVseries','file'])
   df = df.drop_duplicates('number')
   df = df.drop(df[df['year'].str.contains('Video Game')].index)
   df.to_excel("test.xlsx")
+
 # class Content:
 #   def __init__(self, number, title, year, genre, star)
 #     self.number = number
@@ -111,12 +142,13 @@ home = 'https://www.imdb.com'
 # nextPage = 'https://www.imdb.com/search/title/?country_of_origin=kr&start=5001'
 nextPage = 'https://www.imdb.com/search/title/?country_of_origin=kr'
 maxNum = 1000
-content = {'number':[] ,'title':[],'year':[],'genre':[],'star':[]}
+content = {'number':[] ,'title':[],'year':[],'genre':[],'star':[], 'TVseries':[], 'file':[]}
 
 i = 0
 while(i < maxNum) :
   crlr = Crawler(nextPage)
   bs = crlr.getPage()
+  crlr.saveHtml('C:\\Project\\20200717_crawler\\html\\')
   parser = Parser(bs, nextPage)
   parser.setContent(content)
   # print(i)
@@ -128,6 +160,5 @@ while(i < maxNum) :
   i+=1
   # if (i==255) :
   #   print(nextPage)
-
+# print(content)
 toExcel(content)
-# makeCsv(content)
