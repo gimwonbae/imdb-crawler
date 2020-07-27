@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 # import csv
 import re
 from pandas import DataFrame
+import requests
+import numpy as np
 
 def nextSib(head, number):
     i = 0
@@ -49,6 +51,9 @@ class Parser:
       except AttributeError as e:
         number = ''
         # print(self.url, ' : NUMBER ', e)
+
+      info = requests.get('https://v2.sg.media-imdb.com/suggestion/t/' + number + '.json').json()
+
       try:
         title = header.a.get_text().strip()
       except AttributeError as e:
@@ -56,10 +61,7 @@ class Parser:
         # print(self.url, ' : TITLE ', e)
       try:
         yearNotClean = header.find('span', {'class' : 'lister-item-year'}).get_text().replace('(','').replace(')','').strip()
-        if 'Video Game' in yearNotClean:
-          year = 'Video Game'
-        else:
-          year = re.sub('[^0-9–]', '', yearNotClean)  
+        year = re.sub('[^0-9–]', '', yearNotClean)  
       except AttributeError as e:
         year = ''
         # print(self.url, ' : YEAR ', e)            
@@ -84,18 +86,22 @@ class Parser:
       except AttributeError as e:
         star = ''
         # print(self.url, ' : STAR ', e)
-        
-      try:
-        crlr = Crawler('https://www.imdb.com/title/' + number)
-        bs2 = crlr.getPage()
-        moreYear = bs2.find('a', {'title' : 'See more release dates'}).get_text()
-        if 'TV Series' in moreYear:
-          TVseries = True
-        else:
-          TVseries = False
-      except AttributeError as e:
-        TVseries = ''
-        # print(self.url, ' : TVseries', e) 
+
+      TVseries = info['d'][0]['q']
+      otherTitle = info['d'][0]['l']
+
+      # try:
+      #   crlr = Crawler('https://www.imdb.com/title/' + number)
+      #   bs2 = crlr.getPage()
+      #   moreYear = bs2.find('a', {'title' : 'See more release dates'}).get_text()
+      #   if 'TV Series' in moreYear:
+      #     TVseries = True
+      #   else:
+      #     TVseries = False
+      # except AttributeError as e:
+      #   TVseries = ''
+      #   # print(self.url, ' : TVseries', e) 
+
 
       file = self.url.replace('https://','').replace('/','-').replace('?','Q') + '.html'
 
@@ -106,6 +112,7 @@ class Parser:
       content['star'].append(star)
       content['TVseries'].append(TVseries)
       content['file'].append(file)
+      content['otherTitle'].append(otherTitle)
 
   def setNext(self) :
     try:
@@ -125,9 +132,9 @@ class Parser:
 #     csvFile.close()
 
 def toExcel(content) :
-  df = DataFrame(data=content, columns=['number','title','year','genre','star','TVseries','file'])
+  df = DataFrame(data=content, columns=['number','title','otherTitle','year','genre','star','TVseries','file'])
   df = df.drop_duplicates('number')
-  df = df.drop(df[df['year'].str.contains('Video Game')].index)
+  df = df.drop(df[df['TVseries'] == 'video game'].index)
   df.to_excel("test.xlsx")
 
 # class Content:
@@ -142,7 +149,7 @@ home = 'https://www.imdb.com'
 # nextPage = 'https://www.imdb.com/search/title/?country_of_origin=kr&start=5001'
 nextPage = 'https://www.imdb.com/search/title/?country_of_origin=kr'
 maxNum = 1000
-content = {'number':[] ,'title':[],'year':[],'genre':[],'star':[], 'TVseries':[], 'file':[]}
+content = {'number':[] ,'title':[],'year':[],'genre':[],'star':[], 'TVseries':[], 'file':[], 'otherTitle' :[]}
 
 i = 0
 while(i < maxNum) :
